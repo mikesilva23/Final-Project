@@ -1,0 +1,49 @@
+---
+title: "Mileston 4/5"
+author: "Mike Silva"
+date: "4/17/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(stringr)
+library(ggplot2)
+```
+
+```{r}
+defense <- 
+  read_xlsx("2018 DEF DATA.xlsx") %>%
+  clean_names()
+```
+This dataset is from Harvard Football team's 2018 season from the defensive side of the ball. The software we use for film study allows us to print data sets of everything we keep track of on each play. I simply used clean_names() to make everything a bit easier to read, but everything else is already in working format. I plan to allow the user to look at the success rate of a few of our defensive calls in each game of the season. This means the user will be able to choose which game, and a new plot will appear. I may choose to do two plots, one for pass plays and the other for run plays. 
+
+```{r ggplot}
+p <-
+  defense %>%
+  select(cover_call, r_p, gain) %>% 
+  filter(r_p != "NP") %>%
+  mutate(cover_call = case_when(cover_call == "DOME" ~ "Dome",
+                           cover_call == "HILL" ~ "Hill",
+                           cover_call == "SKY" ~ "Sky",
+                           cover_call == "REBEL" ~ "Rebel",
+                           TRUE ~ "Other"))
+#%>%
+ # group_by(cover_call, r_p) %>%
+  #summarize(yardage = sum(gain))
+  
+
+p1<- 
+  p %>% 
+  ggplot(aes(x = cover_call, y = gain, color = cover_call)) + geom_boxplot() +
+  labs(
+    title = "Yardage Comparisons by Coverage"
+  )
+
+p1
+```
+
