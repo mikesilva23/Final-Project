@@ -1,0 +1,64 @@
+---
+title: "messing.around"
+author: "Mike Silva"
+date: "4/23/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(stringr)
+library(ggplot2)
+library(gt)
+library(readr)
+
+```
+
+```{r}
+defense <- 
+  read_xlsx("2018 DEF DATA.xlsx") %>%
+  clean_names()
+```
+
+```{r}
+run_pass_data <-
+  defense %>%
+  select(name, r_p, gain, cover_call) %>%
+  mutate(opponent = case_when(str_detect(name, "USD") ~ "University of San Diego",
+                              str_detect(name, "URI") ~ "University of Rhode Island",
+                              str_detect(name, "CORNELL") ~ "Cornell University",
+                              str_detect(name, "HOLY") ~ "Holy Cross University",
+                              str_detect(name, "PRINCE") ~ "Princeton University",
+                              str_detect(name, "DART") ~ "Dartmouth University",
+                              str_detect(name, "COLUM") ~ "Columbia University",
+                              str_detect(name, "PENN") ~ "University of Pennsylvania",
+                              str_detect(name, "YALE") ~ "Yale University",
+                              str_detect(name, "BROWN") ~ "Brown University")) %>%
+  filter(!is.na(gain))
+
+write_csv(run_pass_data, "boxplot_data.csv")
+
+
+run_pass_plot <-
+  x %>%
+  filter(r_p != "NP") %>%
+  group_by(r_p, opponent) %>%
+  count(r_p) %>%
+  ggplot(aes(x = n, fill = opponent)) + geom_(binwidth = 10)
+run_pass_plot
+
+new_plot <-
+  ggplot(data = subset(run_pass_data,
+                       cover_call == input$cover_call),
+         mapping = aes(x = opponent, y = gain)) + geom_boxplot() + coord_flip()
+new_plot
+
+run_pass_data %>% group_by(cover_call) %>% count(cover_call) %>% arrange(desc(n))
+```
+
+
+
