@@ -27,7 +27,7 @@ defense <-
 ```{r}
 run_pass_data <-
   defense %>%
-  select(name, r_p, gain, cover_call) %>%
+  select(name, r_p, gain, cover_call, quarter, down, dist, line, line_type, play_note, action) %>%
   mutate(opponent = case_when(str_detect(name, "USD") ~ "University of San Diego",
                               str_detect(name, "URI") ~ "University of Rhode Island",
                               str_detect(name, "CORNELL") ~ "Cornell University",
@@ -40,7 +40,7 @@ run_pass_data <-
                               str_detect(name, "BROWN") ~ "Brown University")) %>%
   filter(!is.na(gain))
 
-write_csv(run_pass_data, "boxplot_data.csv")
+write_csv(run_pass_data, "full_data.csv")
 
 
 run_pass_plot <-
@@ -50,6 +50,16 @@ run_pass_plot <-
   count(r_p) %>%
   ggplot(aes(x = n, fill = opponent)) + geom_(binwidth = 10)
 run_pass_plot
+
+data_table <- 
+  run_pass_data %>%
+  filter(!is.na(action)) %>%
+  count(action) %>%
+  arrange(desc(n)) %>%
+  slice(1:5)
+  
+  
+data_table
 
 new_plot <-
   ggplot(data = subset(run_pass_data,

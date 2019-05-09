@@ -9,30 +9,63 @@
 
 library(shiny)
 library(tidyverse)
+library(DT)
+library(ggplot2)
 
-run_pass_data <- read_csv("boxplot_data.csv")
+run_pass_data <- read_csv("full_data.csv")
 
 # Define UI for application that draws a histogram
-ui <- fluidPage(
+ui <- navbarPage("Harvard Football Defense Analysis",
+    
+      tabPanel("About",
+
+        fluidPage(
    
    # Application title
-   titlePanel("Harvard Football Defense Yardage Statistics"),
+        titlePanel("Exploring the 2018 Season for the Harvard Football Defense"),
+        
+        p(paste("In the 2018 season, the Harvard Defense 21.8 points per game in 10 games. This placed them 4th in 
+                the league standings in total defense. This project analyzes data from every single play that the 
+                defense saw throughout the entire season. Analyzing this data allows our coaches to view tendencies
+                in their play calling and the opponents' play calling."))
+        )
+      ),
    
+   tabPanel("Yardage",
+            
+            fluidPage(
+              
+              titlePanel("Yardage Summaries by Play Call"),
+              
    # Sidebar with a slider input for number of bins 
-   sidebarLayout(
+    sidebarLayout(
       sidebarPanel(
         selectInput(inputId = "call",
                     label = "Choose Defensive Call",
                     choices = run_pass_data$cover_call,
                     selected = "DOME"
-        ) 
+        ),
+        selectInput(inputId = "opponent",
+                    label = "Choose Opponent for Data Table",
+                    choices = run_pass_data$opponent ,
+                    selected = "Brown University")
       ),
       
       # Show a plot of the generated distribution
       mainPanel(
-         plotOutput("boxPlot")
+        br(),
+        br(),
+        plotOutput("boxPlot"),
+        
+      br(),
+      br(),
+      DTOutput("linetable"),
+      br(),
+      br()
       )
-   )
+)
+)
+)
 )
 
 # Define server logic required to draw a histogram
@@ -45,11 +78,26 @@ server <- function(input, output) {
      
      ggplot(data = subset_data, aes(x = subset_data$opponent, y = subset_data$gain)) + geom_boxplot() + coord_flip() +
        labs(title = "Yardage Allowed by Defensive Huddle Call",
-            subtitle = "The Harvard Defense Allowed ____ yards on 675 snaps",
-            caption = "Source: Harvard Football") + theme(panel.grid = element_blank(),
-                                                                        axis.ticks = element_blank()) +
-       xlab("Gain (yards)")
+            subtitle = "The Harvard Defense Allowed 3,502 yards on 675 snaps",
+            caption = "Source: Harvard Football",
+            y = "Gain (yards)",
+            x = "Opponent") + theme(panel.grid = element_blank(),
+                                        axis.ticks = element_blank())
       
+   })
+   
+   
+   output$linetable <- renderDT({
+     opponent_table <- run_pass_data %>%
+                      filter(opponent == input$opponent)
+     
+     datatable((opponent_table %>%
+                  filter(!is.na(action)) %>%
+                  count(action) %>%
+                  arrange(desc(n)) %>%
+                  head(5)))
+     
+     #divide by total number to get percentages then table or plot
    })
 }
 
