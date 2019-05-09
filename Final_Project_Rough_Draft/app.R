@@ -11,6 +11,7 @@ library(shiny)
 library(tidyverse)
 library(DT)
 library(ggplot2)
+library(plotly)
 
 run_pass_data <- read_csv("full_data.csv")
 
@@ -24,10 +25,15 @@ ui <- navbarPage("Harvard Football Defense Analysis",
    # Application title
         titlePanel("Exploring the 2018 Season for the Harvard Football Defense"),
         
-        p(paste("In the 2018 season, the Harvard Defense 21.8 points per game in 10 games. This placed them 4th in 
+        p(paste("In the 2018 season, the Harvard Defense allowed 21.8 points per game in 10 games. This placed them 4th in 
                 the league standings in total defense. This project analyzes data from every single play that the 
                 defense saw throughout the entire season. Analyzing this data allows our coaches to view tendencies
-                in their play calling and the opponents' play calling."))
+                in their play calling and the opponents' play calling.")),
+        br(),
+        br(),
+        br(),
+        p(paste("Warning: This project uses terminology they will not make sense to the casual viewer. The audience
+                intended for this project is strictly the Harvard Football coaches."))
         )
       ),
    
@@ -58,6 +64,7 @@ ui <- navbarPage("Harvard Football Defense Analysis",
         plotOutput("boxPlot"),
         
       br(),
+      p(paste("Select an opponent on the left to see the five most frequent plays that each opponent ran.")),
       br(),
       DTOutput("linetable"),
       br(),
