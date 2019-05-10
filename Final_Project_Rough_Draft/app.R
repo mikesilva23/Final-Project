@@ -1,3 +1,4 @@
+#load in all packages that I will need throughout the app
 
 library(shiny)
 library(tidyverse)
@@ -6,11 +7,18 @@ library(ggplot2)
 library(plotly)
 library(shinythemes)
 
+#In a separate rmd file, I shrunk down my dataset to include the variables that I will need in
+#this project. I then wrote a new csv out of that data set, and read in that data here. 
+
 run_pass_data <- read_csv("full_data.csv")
 
 # Define UI for application that draws a histogram
-ui <- navbarPage("Harvard Football Defense Analysis",theme = shinytheme("slate"),
+ui <- navbarPage("Harvard Football Defense Analysis",theme = shinytheme("simplex"),
     
+      #My first panel is my about page where I simply describe what I hope to 
+      #do with this project. I make a warning that many people may not be able to understand
+      #some of the information being displayed, but that is because they are not supposed to!
+                 
       tabPanel("About",
 
         fluidPage(
@@ -19,9 +27,12 @@ ui <- navbarPage("Harvard Football Defense Analysis",theme = shinytheme("slate")
         titlePanel("Exploring the 2018 Season for the Harvard Football Defense"),
         
         p(paste("In the 2018 season, the Harvard Defense allowed 21.8 points per game in 10 games. This placed them 4th in 
-                the league standings in total defense. This project analyzes data from every single play that the 
-                defense saw throughout the entire season. Analyzing this data allows our coaches to view tendencies
-                in their play calling and the opponents' play calling.")),
+                the league standings in total defense. Our coaches have always prided themselves on being the toughest 
+                and best defense in the league, so 4th place is not close to where they would like to be. How can they 
+                figure out what went wrong and where they can be better? Using this web app!This project analyzes data
+                from every single play that the defense saw throughout the entire season. Analyzing this data allows
+                our coaches to view tendencies in their play calling and the opponents' play calling. This may be the
+                key to putting the Harvard defense back in the number 1 spot in the Ivy League.")),
         br(),
         br(),
         br(),
@@ -29,6 +40,9 @@ ui <- navbarPage("Harvard Football Defense Analysis",theme = shinytheme("slate")
                 intended for this project is strictly the Harvard Football coaches."))
         )
       ),
+   
+   #This tab explores the coverage calls that our coaches call every single play of the game.
+   #Reviewing summaries of their playcalling will help them get an idea on their own tendencies.
    
    tabPanel("Play Call Summaries",
             
@@ -39,11 +53,20 @@ ui <- navbarPage("Harvard Football Defense Analysis",theme = shinytheme("slate")
    # Sidebar with a slider input for number of bins 
     sidebarLayout(
       sidebarPanel(
+        
+        #The first input I use allows the users to choose the specific play calls that our
+        #defense uses. This input will connect to a plot that is later created.
+        
         selectInput(inputId = "call",
                     label = "Choose Defensive Call",
                     choices = run_pass_data$cover_call,
                     selected = "DOME"
         ),
+        
+        #This second input allows users to select one of the ten opponents that Harvard
+        #played against this season. When they select an opponent, a data table created below
+        #will be displayed. 
+        
         selectInput(inputId = "opponent",
                     label = "Choose Opponent for Data Table",
                     choices = run_pass_data$opponent ,
@@ -52,18 +75,44 @@ ui <- navbarPage("Harvard Football Defense Analysis",theme = shinytheme("slate")
       
       # Show a plot of the generated distribution
       mainPanel(
-        br(),
-        br(),
-        plotOutput("boxPlot"),
         
+        #br() creates white space throughout the webpage. This
+        #is for aesthetic purposes and making the page cleaner.
+        #This will be repeated several times throughout the app.
+        
+        br(),
+        br(),
+        
+        #This p(paste()) function allows me to insert text into
+        #the app. This process will also be repeated several times
+        #throughout the app.
+
+        p(paste("Hovering over the plot will allow you to view summary statistics about the chosen coverage call.
+                allows our coaches to view what defenses were successful against certain teams, and which were not.
+                Coaches can then make a better decision on what calls to use in the future against those teams.
+                Using the data table below, the coaches will see which calls they used the most against certain
+                teams, then review how successful those calls were in this plot.")),
+        
+        #I chose to quickly discuss what this page is going to do first, then input
+        #the plot and data table below it. This allows the users to understand what's
+        #going on and avoid confusion.
+        
+        plotlyOutput("boxPlot"),
       br(),
       p(paste("Select an opponent on the left to see the five most frequent plays that each opponent ran.")),
       br(),
       DTOutput("linetable"),
       br(),
-      br()
+      br(),
+      width = 12
       )))),
-    tabPanel("Game by Game",
+    
+   #The second tab on the app discusses game trends. This allows the 
+   #coaches to see how the flow of the games went and refer back to 
+   #game film to see when the defense let up big plays or made big
+   #plays
+   
+   tabPanel("Game by Game",
              
              fluidPage(
                
@@ -79,8 +128,15 @@ ui <- navbarPage("Harvard Football Defense Analysis",theme = shinytheme("slate")
                  mainPanel(
                    br(),
                    br(),
+                   p(paste("Hovering over data points allows you to view which play number the data point is in
+                           relation to film breakdown. This allows our coaches to find outlying data points, go
+                           into the film, and see what exactly happened on that play. The second to last number in
+                           the hover info relates to which play number it is in the film, and the final number is the
+                           yardage gained on that specific play.")),
                    plotlyOutput("game_plot"),
-                   br()
+                   br(),
+                   br(),
+                   width = 12
                  )
                )
              )
@@ -91,17 +147,16 @@ ui <- navbarPage("Harvard Football Defense Analysis",theme = shinytheme("slate")
 server <- function(input, output) {
   
    
-   output$boxPlot <- renderPlot({
+   output$boxPlot <- renderPlotly({
      subset_data <- run_pass_data %>%
        filter(cover_call == input$call)
      
-     ggplot(data = subset_data, aes(x = subset_data$opponent, y = subset_data$gain)) + geom_boxplot() + coord_flip() +
-       labs(title = "Yardage Allowed by Defensive Huddle Call",
-            subtitle = "The Harvard Defense Allowed 3,502 yards on 675 snaps",
-            caption = "Source: Harvard Football",
-            y = "Gain (yards)",
-            x = "Opponent") + theme(panel.grid = element_blank(),
-                                        axis.ticks = element_blank())
+     
+     plot_ly(x = ~subset_data$opponent, y = ~subset_data$gain) %>% add_boxplot() %>% 
+       layout(xaxis = list(title = "Opponent"),
+              yaxis = list(title = "Gain")) %>%
+       config(displayModeBar = FALSE)
+
       
    })
    
@@ -113,7 +168,7 @@ server <- function(input, output) {
      datatable((opponent_table %>%
                   group_by(cover_call) %>%
                   count(cover_call) %>%
-                  arrange(desc(n))))
+                  arrange(desc(n))), colnames = c("Coverage Call", "Frequency"))
      
      #divide by total number to get percentages then table or plot
    })
@@ -123,7 +178,8 @@ server <- function(input, output) {
        filter(opponent == input$Opponent)
      
      plot_ly(x = ~game_data$name, y = ~game_data$gain) %>% add_markers() %>% layout(xaxis = list(title = "Opponent"),
-                                                                                    yaxis = list(title = "Gain"))
+                                                                                    yaxis = list(title = "Gain")) %>% 
+       config(displayModeBar = FALSE)
    })
 }
 
