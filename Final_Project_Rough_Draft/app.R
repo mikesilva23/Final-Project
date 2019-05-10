@@ -35,7 +35,6 @@ ui <- navbarPage("Harvard Football Defense Analysis",theme = shinytheme("simplex
                 key to putting the Harvard defense back in the number 1 spot in the Ivy League.")),
         br(),
         br(),
-        br(),
         p(paste("Warning: This project uses terminology they will not make sense to the casual viewer. The audience
                 intended for this project is strictly the Harvard Football coaches."))
         )
@@ -104,6 +103,10 @@ ui <- navbarPage("Harvard Football Defense Analysis",theme = shinytheme("simplex
       DTOutput("linetable"),
       br(),
       br(),
+      
+      #I chose to adjust the width so that the plot takes up the entire page
+      #instead of only a section of the page.
+      
       width = 12
       )))),
     
@@ -117,14 +120,22 @@ ui <- navbarPage("Harvard Football Defense Analysis",theme = shinytheme("simplex
              fluidPage(
                
                titlePanel("Opponent Yardage per Play"),
-               
                sidebarLayout(
                  sidebarPanel(
+                   
+                   #This input allows the user to select the opponent once again.
+                   #When the opponent is selected, a plot will appear that is created
+                   #below.
+                   
                    selectInput(inputId = "Opponent",
                                label = "Choose Opponent",
                                choices = run_pass_data$opponent,
                                selected = "Brown University")
                  ),
+                 
+                 #Once again, I decided to describe what the plot shows beforehand so that 
+                 #users have a better understanding of what they are looking at.
+                 
                  mainPanel(
                    br(),
                    br(),
@@ -136,6 +147,9 @@ ui <- navbarPage("Harvard Football Defense Analysis",theme = shinytheme("simplex
                    plotlyOutput("game_plot"),
                    br(),
                    br(),
+                  
+                   #Once again I adjust the width so that the plot takes up the full page 
+                  
                    width = 12
                  )
                )
@@ -146,39 +160,71 @@ ui <- navbarPage("Harvard Football Defense Analysis",theme = shinytheme("simplex
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   
+  #I generate the boxplot for the play call summaries tab here
+  #I felt that using a boxplot was the best choice to display this
+  #data because it allows the coaches to get a better understanding
+  #of how successful each call was. Hopefully they understand 
+  #quartiles!
    
-   output$boxPlot <- renderPlotly({
+  output$boxPlot <- renderPlotly({
      subset_data <- run_pass_data %>%
        filter(cover_call == input$call)
      
      
+     #I felt that using plotly was the best for these plots because they
+     #allow the coaches to see specific summaries instead of guessing.
+     #In football, there is a big difference between a 9 yard gain 
+     # and 11 yard gain, and using plotly allows the coaches to be
+     #sure about those numbers. 
+     
      plot_ly(x = ~subset_data$opponent, y = ~subset_data$gain) %>% add_boxplot() %>% 
        layout(xaxis = list(title = "Opponent"),
               yaxis = list(title = "Gain")) %>%
+       
+       #The toolguide in ploty is pointless for this plot so I simply
+       #removed it using this code. 
+       
        config(displayModeBar = FALSE)
 
       
    })
    
    
-   output$linetable <- renderDT({
+  #I construct the data table on the play call summaries here. This data table
+  #takes the user's choice and constructs a table displaying the coverage calls
+  #against the chosen opponent in order byy frequency.
+  
+  output$linetable <- renderDT({
      opponent_table <- run_pass_data %>%
                       filter(opponent == input$opponent)
      
      datatable((opponent_table %>%
                   group_by(cover_call) %>%
                   count(cover_call) %>%
-                  arrange(desc(n))), colnames = c("Coverage Call", "Frequency"))
-     
-     #divide by total number to get percentages then table or plot
+                  arrange(desc(n))), 
+                  colnames = c("Coverage Call", "Frequency"))
+
    })
    
-   output$game_plot <- renderPlotly({
+  #I create the scatter plot for the game by game tab here 
+  
+  output$game_plot <- renderPlotly({
      game_data <- run_pass_data %>%
        filter(opponent == input$Opponent)
      
-     plot_ly(x = ~game_data$name, y = ~game_data$gain) %>% add_markers() %>% layout(xaxis = list(title = "Opponent"),
-                                                                                    yaxis = list(title = "Gain")) %>% 
+     #this scatter plot displays every single play against the opponent that
+     #the user selected and the yardage gained on that play. Using plotly on
+     #this graph allows the coaches to hover over outlying values and see the
+     #play number for that play. They can then turn to the film and go directly
+     #to that play and see what happened on that play, which allows them to fix 
+     #mistakes quickly.
+     
+     plot_ly(x = ~game_data$name, y = ~game_data$gain) %>% add_markers() %>% 
+       layout(xaxis = list(title = "Opponent"),
+              yaxis = list(title = "Gain")) %>% 
+       
+       #removed the plotly toolguide again 
+       
        config(displayModeBar = FALSE)
    })
 }
