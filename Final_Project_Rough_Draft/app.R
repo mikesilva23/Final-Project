@@ -1,22 +1,15 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
 
 library(shiny)
 library(tidyverse)
 library(DT)
 library(ggplot2)
 library(plotly)
+library(shinythemes)
 
 run_pass_data <- read_csv("full_data.csv")
 
 # Define UI for application that draws a histogram
-ui <- navbarPage("Harvard Football Defense Analysis",
+ui <- navbarPage("Harvard Football Defense Analysis",theme = shinytheme("slate"),
     
       tabPanel("About",
 
@@ -37,11 +30,11 @@ ui <- navbarPage("Harvard Football Defense Analysis",
         )
       ),
    
-   tabPanel("Yardage",
+   tabPanel("Play Call Summaries",
             
             fluidPage(
               
-              titlePanel("Yardage Summaries by Play Call"),
+              titlePanel("Summary Statistics by Play Call"),
               
    # Sidebar with a slider input for number of bins 
     sidebarLayout(
@@ -69,10 +62,29 @@ ui <- navbarPage("Harvard Football Defense Analysis",
       DTOutput("linetable"),
       br(),
       br()
-      )
-)
-)
-)
+      )))),
+    tabPanel("Game by Game",
+             
+             fluidPage(
+               
+               titlePanel("Opponent Yardage per Play"),
+               
+               sidebarLayout(
+                 sidebarPanel(
+                   selectInput(inputId = "Opponent",
+                               label = "Choose Opponent",
+                               choices = run_pass_data$opponent,
+                               selected = "Brown University")
+                 ),
+                 mainPanel(
+                   br(),
+                   br(),
+                   plotlyOutput("game_plot"),
+                   br()
+                 )
+               )
+             )
+    )
 )
 
 # Define server logic required to draw a histogram
@@ -99,12 +111,19 @@ server <- function(input, output) {
                       filter(opponent == input$opponent)
      
      datatable((opponent_table %>%
-                  filter(!is.na(action)) %>%
-                  count(action) %>%
-                  arrange(desc(n)) %>%
-                  head(5)))
+                  group_by(cover_call) %>%
+                  count(cover_call) %>%
+                  arrange(desc(n))))
      
      #divide by total number to get percentages then table or plot
+   })
+   
+   output$game_plot <- renderPlotly({
+     game_data <- run_pass_data %>%
+       filter(opponent == input$Opponent)
+     
+     plot_ly(x = ~game_data$name, y = ~game_data$gain) %>% add_markers() %>% layout(xaxis = list(title = "Opponent"),
+                                                                                    yaxis = list(title = "Gain"))
    })
 }
 

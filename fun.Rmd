@@ -15,7 +15,7 @@ library(stringr)
 library(ggplot2)
 library(gt)
 library(readr)
-
+library(plotly)
 ```
 
 ```{r}
@@ -54,7 +54,8 @@ run_pass_plot
 data_table <- 
   run_pass_data %>%
   filter(!is.na(action)) %>%
-  count(action) %>%
+  group_by(action) %>%
+  summarize(total = sum(action)) %>%
   arrange(desc(n)) %>%
   slice(1:5)
   
@@ -68,6 +69,12 @@ new_plot <-
 new_plot
 
 run_pass_data %>% group_by(cover_call) %>% count(cover_call) %>% arrange(desc(n))
+
+line_chart <-
+  run_pass_data %>%
+  plot_ly(x = ~name, y = ~gain) %>% add_markers()
+
+line_chart
 ```
 
 
